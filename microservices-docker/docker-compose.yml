@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  eureka:
+    build:
+      context: ./eureka-service
+    #volumes:
+    #  - ./eurekaserver:/eurekaservice
+    ports:
+      - "8761:8761"
+    networks:
+      - microservices-network
+    restart: always
+    
+
+  gateway:
+    build:
+      context: ./gateway-service
+    #volumes:
+    #  - ./gateway:/gateway
+    ports:
+      - "8765:8765"
+    networks:
+      - microservices-network
+    depends_on:
+      - eureka
+    restart: always
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka   
+
+  producer:
+    build:
+      context: ./producer-service
+    #volumes:
+    #  - ./producer:/producerservice
+    ports:
+      - "8082:8082"
+    networks:
+      - microservices-network
+    restart: always
+    depends_on:
+      - eureka
+      - gateway
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+
+
+  consumer:
+    build:
+      context: ./consumer-service
+    #volumes:
+    #  - ./consumer:/consumerservice
+    ports:
+      - "8081:8081"
+    networks:
+      - microservices-network
+    restart: always
+    depends_on:
+      - eureka
+      - gateway
+      - producer
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+
+  
+networks:
+  microservices-network:
+    driver: bridge
